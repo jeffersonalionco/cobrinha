@@ -4,11 +4,195 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jogo da Cobrinha</title>
-    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            margin-top: 20px;
+        }
+
+        #gameCanvas {
+            border: 1px solid #000;
+            background-color: #fff;
+            margin-top: 20px;
+        }
+
+        .controls {
+            margin-top: 20px;
+        }
+
+        .button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 18px;
+            margin: 5px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .button:active {
+            background-color: #0056b3;
+        }
+    </style>
 </head>
 <body>
     <h1>Jogo da Cobrinha</h1>
     <canvas id="gameCanvas" width="400" height="400"></canvas>
-    <script src="script.js"></script>
+    <div class="controls">
+        <button class="button" id="left">Esquerda</button>
+        <button class="button" id="up">Cima</button>
+        <button class="button" id="right">Direita</button>
+        <button class="button" id="down">Baixo</button>
+    </div>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const scale = 20;
+        const rows = canvas.height / scale;
+        const columns = canvas.width / scale;
+
+        let snake;
+        let fruit;
+        let interval;
+
+        function setup() {
+            snake = new Snake();
+            fruit = new Fruit();
+            document.addEventListener('keydown', (e) => {
+                snake.changeDirection(e.key);
+            });
+            document.getElementById('left').addEventListener('click', () => {
+                snake.changeDirection('ArrowLeft');
+            });
+            document.getElementById('up').addEventListener('click', () => {
+                snake.changeDirection('ArrowUp');
+            });
+            document.getElementById('right').addEventListener('click', () => {
+                snake.changeDirection('ArrowRight');
+            });
+            document.getElementById('down').addEventListener('click', () => {
+                snake.changeDirection('ArrowDown');
+            });
+            interval = setInterval(() => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                snake.update();
+                snake.draw();
+                fruit.draw();
+                if (snake.eat(fruit)) {
+                    fruit.pickLocation();
+                }
+                if (snake.collide()) {
+                    clearInterval(interval);
+                    alert('Game Over!');
+                }
+            }, 100);
+        }
+
+        class Snake {
+            constructor() {
+                this.body = [{ x: 0, y: 0 }];
+                this.direction = 'right';
+            }
+
+            draw() {
+                ctx.fillStyle = 'green';
+                this.body.forEach(part => {
+                    ctx.fillRect(part.x, part.y, scale, scale);
+                });
+            }
+
+            update() {
+                const head = { ...this.body[0] };
+                switch (this.direction) {
+                    case 'right':
+                        head.x += scale;
+                        break;
+                    case 'left':
+                        head.x -= scale;
+                        break;
+                    case 'up':
+                        head.y -= scale;
+                        break;
+                    case 'down':
+                        head.y += scale;
+                        break;
+                }
+                this.body.unshift(head);
+                if (this.eat(fruit)) {
+                    fruit.pickLocation();
+                } else {
+                    this.body.pop();
+                }
+            }
+
+            changeDirection(key) {
+                switch (key) {
+                    case 'ArrowUp':
+                        if (this.direction !== 'down') this.direction = 'up';
+                        break;
+                    case 'ArrowDown':
+                        if (this.direction !== 'up') this.direction = 'down';
+                        break;
+                    case 'ArrowLeft':
+                        if (this.direction !== 'right') this.direction = 'left';
+                        break;
+                    case 'ArrowRight':
+                        if (this.direction !== 'left') this.direction = 'right';
+                        break;
+                }
+            }
+
+            eat(fruit) {
+                const head = this.body[0];
+                if (head.x === fruit.position.x && head.y === fruit.position.y) {
+                    this.body.push({});
+                    return true;
+                }
+                return false;
+            }
+
+            collide() {
+                const head = this.body[0];
+                if (head.x < 0 || head.x >= canvas.width || head.y < 0 || head.y >= canvas.height) {
+                    return true;
+                }
+                for (let i = 1; i < this.body.length; i++) {
+                    if (head.x === this.body[i].x && head.y === this.body[i].y) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+        }
+
+        class Fruit {
+            constructor() {
+                this.position = { x: 0, y: 0 };
+                this.pickLocation();
+            }
+
+            draw() {
+                ctx.fillStyle = 'red';
+                ctx.fillRect(this.position.x, this.position.y, scale, scale);
+            }
+
+            pickLocation() {
+                this.position.x = Math.floor(Math.random() * columns) * scale;
+                this.position.y = Math.floor(Math.random() * rows) * scale;
+            }
+        }
+
+        setup();
+    </script>
 </body>
 </html>
+
