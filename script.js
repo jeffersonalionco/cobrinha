@@ -60,7 +60,11 @@ class Snake {
                 break;
         }
         this.body.unshift(head);
-        this.body.pop();
+        if (this.eat(fruit)) {
+            fruit.pickLocation();
+        } else {
+            this.body.pop();
+        }
     }
 
     changeDirection(key) {
